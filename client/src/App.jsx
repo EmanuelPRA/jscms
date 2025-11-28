@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-
+import Home from './components/Home'
+import Stories from './components/Stories'
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
@@ -7,32 +8,25 @@ import './App.scss'
 
 function App() {
 
-function Home() {
-  return <h1>Home Page</h1>;
-}
-
-function About() {
-  return <h1>About Page</h1>;
-}
-
-function Contact() {
-  return <h1>Contact Page</h1>;
-}
-
   return (
     <BrowserRouter>
       {/* Navigation */}
       <nav>
         <Link to="/">Home</Link> |{" "}
-        <Link to="/about">About</Link> |{" "}
-        <Link to="/contact">Contact</Link>
+        <Link to="/stories">Stories</Link> |{" "}
+        <Link to="/politics">Politics</Link> |{" "}
+        <Link to="/culture">Culture</Link> |{" "}
+        <Link to="/sports">Sports</Link> |{" "}
+
       </nav>
 
       {/* Routes */}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+        <Route path="/stories" element={<Stories />} />
+        <Route path="/politics" element={<Stories theme="politics"/>} />
+        <Route path="/culture" element={<Stories theme="culture"/>} />
+        <Route path="/sports" element={<Stories theme="sports"/>} />
       </Routes>
     </BrowserRouter>
   )
