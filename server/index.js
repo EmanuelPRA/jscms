@@ -17,19 +17,61 @@ const pool = new Pool({
 })
 
 app.post('/items', async (req, res) => {
-  const { name, description } = req.body //podaci koji se pošalju iz front-enda kao zahtjev
+  
   try {
-    await pool.query('INSERT INTO items (name, description) VALUES ($1, $2)', [name, description]) //izvršavanje upita na BP
+    await pool.query(`INSERT INTO items (name, description) VALUES ($1, $2)`) //izvršavanje upita na BP
     res.status(201).json({ message: 'Item created' }) //uspjeh
   } catch (err) {
     res.status(500).json({ error: err.message }) //greška
   }
 })
+ app.post('/objava', async (req, res) =>{
+    const username = req.body.username
+    const email = req.body.email
+
+    try {
+    await pool.query(`INSERT INTO users (username, email) VALUES (${username}, ${email})`) //izvršavanje upita na BP
+    res.status(201).json({ message: 'Item created' }) //uspjeh
+    } catch (err) {
+    res.status(500).json({ error: err.message }) //greška
+    }
+  }
+)
+
+
+javascript
+app.post('/verify-password', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Query database for user by email
+    const query = `SELECT userid, hashed_password FROM users WHERE email = ${email}`;
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const user = result.rows[0];
+    const isValid = await bcrypt.compare(password, user.hashed_password);
+
+    if (isValid) {
+      res.json({ success: true, message: 'Password verified' });
+    } else {
+      res.status(401).json({ error: 'Invalid email or password' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+
 
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`Server je pokrenut na portu ${PORT}`)
 })
-
 
