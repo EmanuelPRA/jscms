@@ -42,9 +42,9 @@ app.post("/post", upload.single("thumbnail"), async (req, res)=>{
       return res.status(400).json({ error: "Thumbnail image is required" });
       }
 
-      const thumbnailPath = `/public/images/${file.filename}`;
-      pool.query(`INSERT INTO posts (title, content, author, theme, thumbnail) VALUES 
-        (${title},${content},${author},${theme},${thumbnailPath})`)
+      const thumbnailPath = file.filename;
+      pool.query(`INSERT INTO story (title, storycontent, author, theme, thumbnail) VALUES 
+        ('${title}','${content}',${author},${theme},'${thumbnailPath}')`)
       res.status(201).json({message: "Post successfully added"})
     } catch (err) {
       console.error(err);
@@ -57,7 +57,7 @@ app.post("/post", upload.single("thumbnail"), async (req, res)=>{
 app.get("/stories", async (req, res)=>{
   try {
     if (typeof(req.body.theme) !== "undefined") {
-      result = await pool.query(`SELECT * FROM posts WHERE theme="${req.body.theme}"`)  
+      result = await pool.query(`SELECT * FROM posts WHERE theme='${req.body.theme}'`)  
     }else{
       result = await pool.query(`SELECT * FROM posts`)
     }
@@ -75,11 +75,11 @@ app.post("/updatePost", async (req, res)=>{
 
     try {
       await pool.query(`UPDATE posts SET
-                        title="${title}"
-                        content="${content}"
-                        thumbnail="${thumbnail}"
-                        author="${author}"
-                        theme="${theme}"
+                        title='${title}'
+                        content='${content}'
+                        thumbnail='${thumbnail}'
+                        author=${author}
+                        theme=${theme}
                       WHERE postID=${ID}`)
       res.status(200).json({message: "Story successfully posted"})
     } catch (error) {
@@ -93,7 +93,7 @@ app.post("/updatePost", async (req, res)=>{
 app.delete("/deletPost", async (req, res) =>{
   const ID = req.body.postID
   try{
-    pool.query(`DELETE FROM posts WHERE postID ="${ID}"`)
+    pool.query(`DELETE FROM posts WHERE postID =${ID}`)
   }catch{
 
   }
@@ -106,7 +106,7 @@ app.post("/login", async (req, res) =>{
   const {email, password} = req.body
 
   try {
-    const result = await pool.query(`SELECT userid, username, email, pass FROM admins WHERE email="${email}"`)
+    const result = await pool.query(`SELECT userid, username, email, pass FROM admins WHERE email='${email}'`)
     if (result.rows.length == 0) {
       return res.status(401).json({message: "Authentification error"})
     }

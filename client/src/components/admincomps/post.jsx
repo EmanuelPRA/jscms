@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo, useCallback } from 'react';
 import axios from 'axios'
 
 function AdminPost() {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(""); //there is 100% a better way other than using 5 useStates but I am tired
   const [content, setContent] = useState("");
   const [author, setAuthor] = useState("");
   const [theme, setTheme] = useState("");
