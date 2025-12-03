@@ -3,10 +3,25 @@ require('dotenv').config() // Čita .env datoteku i učitava varijable okoline
 const express = require('express') // Framework za server
 const cors = require('cors') // Middleware za dozvolu CORS zahtjeva
 const { Pool } = require('pg') // PostgreSQL connection pool
+const multer = require('multer')
+const path = require('path')
 
 const app = express()
 app.use(cors()) // Omogućava pristup API iz drugih domena (frontend)
 app.use(express.json()) // Omogućava parsiranje JSON tijela zahtjeva
+app.use(express.static(path.join(__dirname, 'public/images')))
+
+const storage = multer.diskStorage({
+  destination: (req,file, cb) =>{
+    cb(null, 'public/images')
+  },
+  filename: (req, file, cb) =>{
+    cb(null, Date.now() + path.extname(file.originalname))
+  }
+})
+
+const upload = multer({storage: storage})
+
 
 const pool = new Pool({
   user: process.env.DB_USER,
@@ -18,15 +33,22 @@ const pool = new Pool({
 
 /*-------------------------------------CRUD on stories-------------------------------------*/
 //CREATE
-app.post("/post", async (req, res)=>{
-    const {title, content, thumbnail, author, theme} = req.body
-
+app.post("/post", upload.single("thumbnail"), async (req, res)=>{
     try {
-      await pool.query(`INSERT INTO posts (title, content, thumbnail, author, theme) VALUES (${title}, ${content}, ${thumbnail}, ${author}, ${theme}})`)
-      res.status(200).json({message: "Story successfully updated"})
-    } catch (error) {
-      console.log(error)
-      res.status(500).json({message: "Server Error!", err: error})
+      const {title, content, author, theme} = req.body
+      
+      const file = req.file;
+      if (!file) {
+      return res.status(400).json({ error: "Thumbnail image is required" });
+      }
+
+      const thumbnailPath = `/public/images/${file.filename}`;
+      pool.query(`INSERT INTO posts (title, content, author, theme, thumbnail) VALUES 
+        (${title},${content},${author},${theme},${thumbnailPath})`)
+      res.status(201).json({message: "Post successfully added"})
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error creating post" });
     }
 })
 
