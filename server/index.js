@@ -1,4 +1,4 @@
-
+const bcrypt = require('bcrypt')
 require('dotenv').config() // Čita .env datoteku i učitava varijable okoline
 const express = require('express') // Framework za server
 const cors = require('cors') // Middleware za dozvolu CORS zahtjeva
@@ -14,59 +14,97 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_DATABASE
-})
+})       
 
-app.post('/items', async (req, res) => {
-  
-  try {
-    await pool.query(`INSERT INTO items (name, description) VALUES ($1, $2)`) //izvršavanje upita na BP
-    res.status(201).json({ message: 'Item created' }) //uspjeh
-  } catch (err) {
-    res.status(500).json({ error: err.message }) //greška
-  }
-})
- app.post('/objava', async (req, res) =>{
-    const username = req.body.username
-    const email = req.body.email
+/*-------------------------------------CRUD on stories-------------------------------------*/
+//CREATE
+app.post("/post", async (req, res)=>{
+    const {title, content, thumbnail, author, theme} = req.body
 
     try {
-    await pool.query(`INSERT INTO users (username, email) VALUES (${username}, ${email})`) //izvršavanje upita na BP
-    res.status(201).json({ message: 'Item created' }) //uspjeh
-    } catch (err) {
-    res.status(500).json({ error: err.message }) //greška
+      await pool.query(`INSERT INTO posts (title, content, thumbnail, author, theme) VALUES (${title}, ${content}, ${thumbnail}, ${author}, ${theme}})`)
+      res.status(200).json({message: "Story successfully updated"})
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({message: "Server Error!", err: error})
     }
-  }
-)
+})
 
 
-javascript
-app.post('/verify-password', async (req, res) => {
-  const { email, password } = req.body;
+//READ
+app.get("/stories", async (req, res)=>{
   try {
-    // Query database for user by email
-    const query = `SELECT userid, hashed_password FROM users WHERE email = ${email}`;
-    const result = await pool.query(query);
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (typeof(req.body.theme) !== "undefined") {
+      result = await pool.query(`SELECT * FROM posts WHERE theme="${req.body.theme}"`)  
+    }else{
+      result = await pool.query(`SELECT * FROM posts`)
     }
-
-    const user = result.rows[0];
-    const isValid = await bcrypt.compare(password, user.hashed_password);
-
-    if (isValid) {
-      res.json({ success: true, message: 'Password verified' });
-    } else {
-      res.status(401).json({ error: 'Invalid email or password' });
-    }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.send(result)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message: "Server Error"})
   }
-});
+  
+})
+
+//UPDATE
+app.post("/updatePost", async (req, res)=>{
+    const {ID, title, content, thumbnail, author, theme} = req.body
+
+    try {
+      await pool.query(`UPDATE posts SET
+                        title="${title}"
+                        content="${content}"
+                        thumbnail="${thumbnail}"
+                        author="${author}"
+                        theme="${theme}"
+                      WHERE postID=${ID}`)
+      res.status(200).json({message: "Story successfully posted"})
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({message: "Server Error!", err: error})
+    }
+})
 
 
+//DELETE
+app.delete("/deletPost", async (req, res) =>{
+  const ID = req.body.postID
+  try{
+    pool.query(`DELETE FROM posts WHERE postID ="${ID}"`)
+  }catch{
 
+  }
+})
+
+/*-------------------------------------Admin auth-------------------------------------*/
+
+
+app.post("/login", async (req, res) =>{
+  const {email, password} = req.body
+
+  try {
+    const result = await pool.query(`SELECT userid, username, email, pass FROM admins WHERE email="${email}"`)
+    if (result.rows.length == 0) {
+      return res.status(401).json({message: "Authentification error"})
+    }
+
+    const user = result.rows[0]
+    if (await bcrypt.compare(password, user.password)) {
+      res.send(result)
+    }else{
+      res.status(401).json({message: "Incorrect password!"})
+
+    }
+
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message: "Server Error!"})
+  }
+
+})
+
+//TODO Set up a 1st level admin(complete control over admin accounts)
 
 
 
